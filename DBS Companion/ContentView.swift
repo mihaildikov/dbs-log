@@ -8,54 +8,146 @@
 import SwiftUI
 import SwiftData
 
+enum AddEventInputMethod: String, CaseIterable, Identifiable {
+    case text
+    case voice
+    case camera
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .text:
+            "Text / Manual entry"
+        case .voice:
+            "Voice input"
+        case .camera:
+            "Camera / photo input"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .text:
+            "doc.text"
+        case .voice:
+            "mic"
+        case .camera:
+            "camera"
+        }
+    }
+}
+
+enum AppRoute: Hashable {
+    case newEvent(AddEventInputMethod)
+    case selectEvents
+    case share([UUID])
+}
+
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
+    @Query(sort: \Event.timestamp, order: .reverse) private var events: [Event]
+
+    @State private var path = NavigationPath()
+    @State private var showActionSheet = false
+
+    private var timeFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        return formatter
+    }
 
     var body: some View {
-        NavigationSplitView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
+        NavigationStack(path: $path) {
+            VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("DBS Companion")
+                        .font(.headline)
+                        .foregroundStyle(.secondary)
+                    Text("Event log")
+                        .font(.largeTitle.weight(.semibold))
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                List {
+                    ForEach(events) { event in
+                        EventRow(event: event, timeFormatter: timeFormatter)
                     }
                 }
-                .onDelete(perform: deleteItems)
+                .listStyle(.plain)
             }
+            .padding(.horizontal)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
+                    Button(action: { showActionSheet = true }) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.title2)
+                    }
                 }
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
+                ToolbarItem(placement: .navigationBarLeading) {
+                    if !events.isEmpty {
+                        Button("Select") {
+                            path.append(AppRoute.selectEvents)
+                        }
                     }
                 }
             }
-        } detail: {
-            Text("Select an item")
-        }
-    }
-
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
-        }
-    }
-
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
+            .navigationBarTitleDisplayMode(.inline)
+            .confirmationDialog("Add event", isPresented: $showActionSheet, titleVisibility: .visible) {
+                ForEach(AddEventInputMethod.allCases) { method in
+                    Button {
+                        path.append(AppRoute.newEvent(method))
+                    } label: {
+                        Label(method.label, systemImage: method.icon)
+                    }
+                }
+            }
+            .navigationDestination(for: AppRoute.self) { route in
+                switch route {
+                case .newEvent(let method):
+                    NewEventView(inputMethod: method) { event in
+                        modelContext.insert(event)
+                    }
+                case .selectEvents:
+                    SelectEventsView(events: events) { selected in
+                        path.append(AppRoute.share(Array(selected)))
+                    }
+                case .share(let ids):
+                    let selectedEvents = events.filter { ids.contains($0.id) }
+                    ShareEventsView(events: selectedEvents)
+                }
             }
         }
     }
 }
 
+struct EventRow: View {
+    let event: Event
+    let timeFormatter: DateFormatter
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Text(timeFormatter.string(from: event.timestamp))
+                .font(.headline.weight(.semibold))
+                .padding(.vertical, 8)
+                .padding(.horizontal, 10)
+                .background(.yellow.opacity(0.8))
+                .clipShape(Capsule())
+
+            Text(event.type.displayName)
+                .font(.headline.weight(.semibold))
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, 12)
+                .padding(.horizontal, 12)
+                .background(Color.blue)
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        }
+        .contentShape(Rectangle())
+    }
+}
+
 #Preview {
     ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
+        .modelContainer(for: Event.self, inMemory: true)
 }
