@@ -36,6 +36,17 @@ enum AddEventInputMethod: String, CaseIterable, Identifiable {
             "camera"
         }
     }
+
+    var mode: NewEventMode {
+        switch self {
+        case .text:
+            .manual
+        case .voice:
+            .voice
+        case .camera:
+            .camera
+        }
+    }
 }
 
 enum AppRoute: Hashable {
@@ -105,7 +116,7 @@ struct ContentView: View {
             .navigationDestination(for: AppRoute.self) { route in
                 switch route {
                 case .newEvent(let method):
-                    NewEventView(inputMethod: method) { event in
+                    NewEventView(mode: method.mode, inputMethod: method) { event in
                         modelContext.insert(event)
                     }
                 case .selectEvents:
