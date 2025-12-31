@@ -60,6 +60,11 @@ final class SpeechTranscriber: NSObject, ObservableObject {
             return
         }
 
+        guard audioSession.isInputAvailable else {
+            state = .error("No audio input available. Check microphone access or device settings.")
+            return
+        }
+
         recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
         guard let recognitionRequest else {
             state = .error("Unable to create recognition request.")
@@ -92,7 +97,11 @@ final class SpeechTranscriber: NSObject, ObservableObject {
             }
         }
 
-        let inputNode = audioEngine.inputNode
+        guard let inputNode = audioEngine.inputNodeOptional else {
+            state = .error("No audio input node available.")
+            return
+        }
+
         let recordingFormat = inputNode.inputFormat(forBus: 0)
 
         guard recordingFormat.sampleRate > 0, recordingFormat.channelCount > 0 else {
@@ -176,5 +185,12 @@ final class SpeechTranscriber: NSObject, ObservableObject {
                 completion(false)
             }
         }
+    }
+}
+private extension AVAudioEngine {
+    var inputNodeOptional: AVAudioInputNode? {
+        let node = inputNode
+        let format = node.inputFormat(forBus: 0)
+        return format.channelCount > 0 ? node : nil
     }
 }

@@ -5,6 +5,8 @@ enum EventType: String, CaseIterable, Identifiable, Codable {
     case dyskinesia
     case dystonia
     case wearingOff
+    case tremor
+    case feelsGood
 
     var id: String { rawValue }
 
@@ -16,6 +18,29 @@ enum EventType: String, CaseIterable, Identifiable, Codable {
             "Dystonia"
         case .wearingOff:
             "Wearing OFF"
+        case .tremor:
+            "Tremor"
+        case .feelsGood:
+            "Feels Good"
+        }
+    }
+}
+
+enum EventStatus: String, CaseIterable, Identifiable, Codable {
+    case pending
+    case completed
+    case archived
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .pending:
+            "Pending"
+        case .completed:
+            "Completed"
+        case .archived:
+            "Archived"
         }
     }
 }
@@ -26,18 +51,37 @@ final class Event {
     var timestamp: Date
     var typeRaw: String
     var subtype: String?
-    var notes: String?
+    var notes: String? {
+        didSet {
+            guard let notes, notes.count > 200 else { return }
+            let limited = String(notes.prefix(200))
+            if limited != notes {
+                self.notes = limited
+            }
+        }
+    }
+    var stateRaw: String = EventStatus.pending.rawValue
 
-    init(id: UUID = UUID(), timestamp: Date, type: EventType, subtype: String? = nil, notes: String? = nil) {
+    init(id: UUID = UUID(), timestamp: Date, type: EventType, subtype: String? = nil, notes: String? = nil, state: EventStatus = .pending) {
         self.id = id
         self.timestamp = timestamp
         self.typeRaw = type.rawValue
         self.subtype = subtype
-        self.notes = notes
+        if let notes, notes.count > 200 {
+            self.notes = String(notes.prefix(200))
+        } else {
+            self.notes = notes
+        }
+        self.stateRaw = state.rawValue
     }
 
     var type: EventType {
         get { EventType(rawValue: typeRaw) ?? .dyskinesia }
         set { typeRaw = newValue.rawValue }
+    }
+
+    var state: EventStatus {
+        get { EventStatus(rawValue: stateRaw) ?? .pending }
+        set { stateRaw = newValue.rawValue }
     }
 }

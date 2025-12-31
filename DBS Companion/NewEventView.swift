@@ -6,6 +6,8 @@ struct NewEventView: View {
 
     let mode: NewEventMode
     let inputMethod: AddEventInputMethod
+    var initialDraft: ParsedEventDraft? = nil
+    var autoStartVoice: Bool = false
     var onSave: (Event) -> Void
 
     @State private var timestamp = Date()
@@ -13,6 +15,8 @@ struct NewEventView: View {
     @State private var subtype = ""
     @State private var notes = ""
     @State private var warnings: [String] = []
+    @State private var didApplyDraft = false
+    @State private var detectedDraft: ParsedEventDraft?
 
     @StateObject private var transcriber = SpeechTranscriber()
     private let parser = EventTranscriptParser()
@@ -50,12 +54,12 @@ struct NewEventView: View {
                 .pickerStyle(.navigationLink)
             }
 
-            Section(header: Text("Sub-type (optional)")) {
-                TextField("Shoulder Pull", text: $subtype)
+            Section(header: Text("Details (optional)")) {
+                TextField("For example: \"Shoulder pulls forward\"", text: $subtype)
             }
 
             Section(header: Text("Notes")) {
-                TextField("Shoulder pulls forward causing winging scapula", text: $notes, axis: .vertical)
+                TextField("For example: \"Shoulder pulls forward\"", text: limitedNotesBinding, axis: .vertical)
                     .lineLimit(3...6)
             }
 
@@ -87,6 +91,11 @@ struct NewEventView: View {
         }
         .onAppear {
             transcriber.onFinalTranscription = applyTranscript
+            applyInitialDraftIfNeeded()
+        }
+        .onChange(of: transcriber.transcript) { _, latest in
+            guard transcriber.state == .recording || transcriber.state == .processing else { return }
+            detectedDraft = parser.parse(latest)
         }
     }
 
@@ -127,6 +136,10 @@ struct NewEventView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                     }
                     .frame(minHeight: 80, maxHeight: 140)
+
+                    if let detectedDraft {
+                        detectedHighlights(for: detectedDraft)
+                    }
                 }
 
                 if case .error(let message) = transcriber.state {
@@ -178,6 +191,40 @@ struct NewEventView: View {
         }
     }
 
+    @ViewBuilder
+    private func detectedHighlights(for draft: ParsedEventDraft) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            if let type = draft.type {
+                highlightRow(label: "Type", value: type.displayName)
+            }
+            if let subtype = draft.subtype, !subtype.isEmpty {
+                highlightRow(label: "Details", value: subtype)
+            }
+            if let notes = draft.notes, !notes.isEmpty {
+                highlightRow(label: "Notes", value: notes)
+            }
+        }
+    }
+
+    private func highlightRow(label: String, value: String) -> some View {
+        HStack(spacing: 8) {
+            Text(label)
+                .font(.caption.weight(.bold))
+                .padding(.vertical, 4)
+                .padding(.horizontal, 8)
+                .background(Color.blue)
+                .foregroundStyle(.white)
+                .clipShape(Capsule())
+
+            Text(value)
+                .font(.caption)
+                .padding(.vertical, 4)
+                .padding(.horizontal, 8)
+                .background(Color.blue.opacity(0.15))
+                .clipShape(Capsule())
+        }
+    }
+
     private func toggleRecording() {
         switch transcriber.state {
         case .recording:
@@ -191,6 +238,7 @@ struct NewEventView: View {
 
     private func applyTranscript(_ transcript: String) {
         let parsed = parser.parse(transcript)
+        detectedDraft = parsed
         warnings = parsed.parseWarnings
         if let parsedType = parsed.type {
             eventType = parsedType
@@ -202,17 +250,63 @@ struct NewEventView: View {
             timestamp = parsedTime
         }
 
-        let parsedNotes = parsed.notes ?? parsed.rawTranscript
+        let parsedNotes = parsed.notes ?? parsed.rawText
         if notes.isEmpty {
-            notes = parsedNotes
+            notes = truncatedNotes(from: parsedNotes)
         } else {
-            notes += "\n" + parsedNotes
+            let combined = notes + "\n" + parsedNotes
+            notes = truncatedNotes(from: combined)
         }
+    }
+
+    private func applyInitialDraftIfNeeded() {
+        guard !didApplyDraft, let initialDraft else { return }
+        didApplyDraft = true
+        detectedDraft = initialDraft
+
+        if let draftType = initialDraft.type { eventType = draftType }
+        if let draftSubtype = initialDraft.subtype { subtype = draftSubtype }
+        if let draftTime = initialDraft.timestamp { timestamp = draftTime }
+
+        var draftNotes: [String] = []
+        if let source = initialDraft.source { draftNotes.append("Source: \(source)") }
+        if let notesValue = initialDraft.notes { draftNotes.append(notesValue) }
+        let combinedDraftNotes = draftNotes.joined(separator: "\n")
+
+        if !combinedDraftNotes.isEmpty {
+            if notes.isEmpty {
+                notes = truncatedNotes(from: combinedDraftNotes)
+            } else {
+                let combined = notes + "\n" + combinedDraftNotes
+                notes = truncatedNotes(from: combined)
+            }
+        }
+
+        warnings = initialDraft.parseWarnings
+
+        if mode == .voice && autoStartVoice {
+            transcriber.startRecording()
+        }
+    }
+
+    private func truncatedNotes(from text: String) -> String {
+        if text.count <= 200 { return text }
+        let prefix = text.prefix(200)
+        return String(prefix)
+    }
+
+    private var limitedNotesBinding: Binding<String> {
+        Binding<String>(
+            get: { notes },
+            set: { newValue in
+                notes = String(newValue.prefix(200))
+            }
+        )
     }
 }
 
 #Preview {
     NavigationStack {
-        NewEventView(mode: .voice, inputMethod: .voice) { _ in }
+        NewEventView(mode: .voice, inputMethod: .voice, initialDraft: nil, autoStartVoice: false) { _ in }
     }
 }

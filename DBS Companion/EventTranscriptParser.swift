@@ -1,11 +1,12 @@
 import Foundation
 
-struct ParsedEventDraft: Equatable {
+struct ParsedEventDraft: Equatable, Hashable {
     var type: EventType?
     var subtype: String?
     var timestamp: Date?
+    var source: String?
     var notes: String?
-    var rawTranscript: String
+    var rawText: String
     var confidence: Double?
     var parseWarnings: [String]
 }
@@ -30,36 +31,60 @@ struct EventTranscriptParser {
             subtype: subtype,
             timestamp: timestamp ?? now,
             notes: notes,
-            rawTranscript: transcript,
+            rawText: transcript,
             confidence: nil,
             parseWarnings: warnings
         )
     }
 
     private func detectType(in text: String) -> EventType? {
-        if text.contains("dystonia") || text.contains("dystonic") {
-            return .dystonia
-        }
-        if text.contains("dyskinesia") || text.contains("dyskinesia episode") {
-            return .dyskinesia
+        let candidates: [(EventType, [String])] = [
+            (
+                .dystonia,
+                [
+                    "dystonia", "dystonic", "event type dystonia", "event dystonia",
+                    "distonia", "dastonia", "justonia", "dystonya"
+                ]
+            ),
+            (
+                .dyskinesia,
+                [
+                    "dyskinesia", "dyskinesia episode", "event type dyskinesia", "event dyskinesia",
+                    "diskinesia", "diskenesia", "diskinesya", "dyskinesya", "dis kinesia"
+                ]
+            ),
+            (
+                .wearingOff,
+                [
+                    "wearing off", "wearing-off", "off period", "event off", "event wearing", "event type off", "event type wearing off"
+                ]
+            ),
+            (
+                .tremor,
+                ["tremor", "trimmer", "tremour", "shaking", "shaky"]
+            ),
+            (
+                .feelsGood,
+                ["feels good", "feel good", "feeling good", "feeling ok", "better now"]
+            )
+        ]
+
+        let matches = candidates.compactMap { eventType, keywords in
+            keywords.contains { text.contains($0) } ? eventType : nil
         }
 
-        if text.contains("wearing off") || text.contains("wearing-off") || text.contains("off period") {
-            return .wearingOff
-        }
-
-        if text.contains("event off") || text.contains("event wearing") {
-            return .wearingOff
-        }
-
-        return nil
+        return matches.first
     }
 
     private func detectSubtype(in text: String) -> String? {
         let patterns = [
             "sub type is\\s+([^,]*)",
             "subtype\\s+([^,]*)",
-            "sub type\\s+([^,]*)"
+            "sub type\\s+([^,]*)",
+            "detail is\\s+([^,]*)",
+            "details is\\s+([^,]*)",
+            "detail\\s+([^,]*)",
+            "details\\s+([^,]*)"
         ]
 
         for pattern in patterns {
@@ -68,6 +93,10 @@ struct EventTranscriptParser {
                     .replacingOccurrences(of: "sub type is", with: "")
                     .replacingOccurrences(of: "subtype", with: "")
                     .replacingOccurrences(of: "sub type", with: "")
+                    .replacingOccurrences(of: "detail is", with: "")
+                    .replacingOccurrences(of: "details is", with: "")
+                    .replacingOccurrences(of: "detail", with: "")
+                    .replacingOccurrences(of: "details", with: "")
                     .trimmingCharacters(in: .whitespacesAndNewlines)
                 return value.capitalized
             }

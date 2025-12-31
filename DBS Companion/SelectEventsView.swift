@@ -12,18 +12,29 @@ struct SelectEventsView: View {
         return formatter
     }
 
+    private var dayFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        return formatter
+    }
+
     var body: some View {
         List(selection: $selected) {
-            ForEach(events) { event in
-                HStack(spacing: 12) {
-                    Image(systemName: selected.contains(event.id) ? "checkmark.circle.fill" : "circle")
-                        .foregroundStyle(selected.contains(event.id) ? .blue : .secondary)
-                    EventRow(event: event, timeFormatter: timeFormatter)
-                        .padding(.vertical, 2)
-                }
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    toggle(event.id)
+            ForEach(sectionedEvents, id: \.date) { section in
+                Section(header: Text(dayFormatter.string(from: section.date))) {
+                    ForEach(section.events) { event in
+                        HStack(spacing: 12) {
+                            Image(systemName: selected.contains(event.id) ? "checkmark.circle.fill" : "circle")
+                                .foregroundStyle(selected.contains(event.id) ? .blue : .secondary)
+                            EventRow(event: event, timeFormatter: timeFormatter)
+                                .padding(.vertical, 2)
+                        }
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            toggle(event.id)
+                        }
+                    }
                 }
             }
         }
@@ -36,6 +47,18 @@ struct SelectEventsView: View {
                 }
                 .disabled(selected.isEmpty)
             }
+        }
+    }
+
+    private var sectionedEvents: [(date: Date, events: [Event])] {
+        let calendar = Calendar.current
+        let grouped = Dictionary(grouping: events) { event in
+            calendar.startOfDay(for: event.timestamp)
+        }
+        let sortedKeys = grouped.keys.sorted(by: >)
+        return sortedKeys.map { key in
+            let dayEvents = (grouped[key] ?? []).sorted { $0.timestamp > $1.timestamp }
+            return (date: key, events: dayEvents)
         }
     }
 

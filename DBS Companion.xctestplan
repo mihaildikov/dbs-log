@@ -1,0 +1,38 @@
+{
+  "configurations" : [
+    {
+      "id" : "3A04F418-5CD5-46C1-BD3F-53E0AD6F1F7D",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "performanceAntipatternCheckerEnabled" : true,
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:DBS Companion.xcodeproj",
+      "identifier" : "64F964182F04678E0017BC42",
+      "name" : "DBS Companion"
+    }
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:DBS Companion.xcodeproj",
+        "identifier" : "64F964272F0467910017BC42",
+        "name" : "DBS CompanionTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:DBS Companion.xcodeproj",
+        "identifier" : "64F964312F0467910017BC42",
+        "name" : "DBS CompanionUITests"
+      }
+    }
+  ],
+  "version" : 1
+}

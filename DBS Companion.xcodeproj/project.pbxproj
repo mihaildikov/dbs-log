@@ -24,6 +24,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		6402FF672F04EA0A00A869C9 /* DBS Companion.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = "DBS Companion.xctestplan"; sourceTree = "<group>"; };
 		64F964192F04678E0017BC42 /* DBS Companion.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "DBS Companion.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		64F964282F0467910017BC42 /* DBS CompanionTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "DBS CompanionTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		64F964322F0467910017BC42 /* DBS CompanionUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "DBS CompanionUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -75,6 +76,7 @@
 		64F964102F04678E0017BC42 = {
 			isa = PBXGroup;
 			children = (
+				6402FF672F04EA0A00A869C9 /* DBS Companion.xctestplan */,
 				64F9641B2F04678E0017BC42 /* DBS Companion */,
 				64F9642B2F0467910017BC42 /* DBS CompanionTests */,
 				64F964352F0467910017BC42 /* DBS CompanionUITests */,
@@ -400,6 +402,9 @@
 				DEVELOPMENT_TEAM = 9T6D5B9VZ4;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "We need camera access to capture photos for detecting and pre-filling event details.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "We need microphone access to record your voice for event logging.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "We use speech recognition to capture and transcribe your event details.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -432,6 +437,9 @@
 				DEVELOPMENT_TEAM = 9T6D5B9VZ4;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "We need camera access to capture photos for detecting and pre-filling event details.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "We need microphone access to record your voice for event logging.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "We use speech recognition to capture and transcribe your event details.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

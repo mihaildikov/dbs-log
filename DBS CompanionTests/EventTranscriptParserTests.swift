@@ -1,6 +1,8 @@
+import Foundation
 @testable import DBS_Companion
 import Testing
 
+@MainActor
 struct EventTranscriptParserTests {
 
     @Test func parses_type_subtype_and_time() async throws {
