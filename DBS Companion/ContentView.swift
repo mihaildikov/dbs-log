@@ -67,6 +67,8 @@ struct ContentView: View {
     @State private var selectedStatus: EventStatus = .pending
     @State private var pendingCompleteID: UUID?
     @State private var showCompleteAlert = false
+    @State private var pendingCompleteIDs: [UUID] = []
+    @State private var showGroupCompleteAlert = false
     @State private var isSelecting = false
     @State private var selectedIDs = Set<UUID>()
 
@@ -154,6 +156,17 @@ struct ContentView: View {
                 }
             }, message: {
                 Text("This will move the event to Completed status.")
+            })
+            .alert("Complete selected events?", isPresented: $showGroupCompleteAlert, actions: {
+                Button("Complete", role: .destructive) {
+                    markCompleteEvents(with: pendingCompleteIDs)
+                    pendingCompleteIDs = []
+                }
+                Button("Cancel", role: .cancel) {
+                    pendingCompleteIDs = []
+                }
+            }, message: {
+                Text("This will move the selected events to Completed status.")
             })
         }
     }
@@ -296,10 +309,21 @@ struct ContentView: View {
                     path.append(.share(selected))
                     resetSelection()
                 } label: {
-                    Label("Share", systemImage: "square.and.arrow.up")
+                    selectionActionLabel(title: "Share", systemImage: "square.and.arrow.up")
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered)
+                .disabled(selectedIDs.isEmpty)
+
+                Button {
+                    pendingCompleteIDs = Array(selectedIDs)
+                    showGroupCompleteAlert = true
+                } label: {
+                    selectionActionLabel(title: "Complete", systemImage: "checkmark.circle.fill")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.green)
                 .disabled(selectedIDs.isEmpty)
             }
 
@@ -307,7 +331,7 @@ struct ContentView: View {
                 pendingDeleteIDs = Array(selectedIDs)
                 showDeleteAlert = true
             } label: {
-                Label("Delete", systemImage: "trash")
+                selectionActionLabel(title: "Delete", systemImage: "trash")
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
@@ -336,6 +360,27 @@ struct ContentView: View {
     private func markComplete(_ event: Event) {
         withAnimation {
             event.state = .completed
+        }
+    }
+
+    private func markCompleteEvents(with ids: [UUID]) {
+        guard !ids.isEmpty else { return }
+        withAnimation {
+            for id in ids {
+                if let event = events.first(where: { $0.id == id }) {
+                    event.state = .completed
+                }
+            }
+            resetSelection()
+        }
+    }
+
+    private func selectionActionLabel(title: String, systemImage: String) -> some View {
+        ViewThatFits(in: .horizontal) {
+            Label(title, systemImage: systemImage)
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
+            Image(systemName: systemImage)
         }
     }
 

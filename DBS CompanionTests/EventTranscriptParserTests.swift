@@ -32,4 +32,20 @@ struct EventTranscriptParserTests {
         #expect(draft.type == nil)
         #expect(draft.parseWarnings.contains("Couldn't detect event type."))
     }
+
+    @Test func parses_bradykinesia_keywords() async throws {
+        let parser = EventTranscriptParser()
+        let now = Date()
+        let draft = parser.parse("Feeling slow with slowness in the afternoon", now: now)
+
+        #expect(draft.type == .bradykinesia)
+    }
+
+    @Test func parses_rigidity_keywords() async throws {
+        let parser = EventTranscriptParser()
+        let now = Date()
+        let draft = parser.parse("Noting stiffness and spasms after lunch", now: now)
+
+        #expect(draft.type == .rigidity)
+    }
 }

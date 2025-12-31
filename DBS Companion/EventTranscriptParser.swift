@@ -61,7 +61,15 @@ struct EventTranscriptParser {
             ),
             (
                 .tremor,
-                ["tremor", "trimmer", "tremour", "shaking", "shaky"]
+                ["tremor", "trimmer", "tremour", "shaking", "shaky", "shake", "shakes", "shaken"]
+            ),
+            (
+                .bradykinesia,
+                ["bradykinesia", "bradikinesia", "slow movement", "slow movements", "slowdown", "slowness", "slow"]
+            ),
+            (
+                .rigidity,
+                ["rigidity", "rigid", "stiffness", "stiffnes", "stiff", "spasm", "spasms", "spastic"]
             ),
             (
                 .feelsGood,

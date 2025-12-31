@@ -49,7 +49,9 @@ struct PhotoEventAnalyzer {
             (.dystonia, ["dystonia", "dystonic", "distonia", "dastonia"]),
             (.dyskinesia, ["dyskinesia", "diskinesia", "dys kinesia"]),
             (.wearingOff, ["wearing off", "wearing-off", "off period", "event off", "wearing off recorded", "wearing-off recorded"]),
-            (.tremor, ["tremor", "trimmer", "tremour", "shaking", "shaky"]),
+            (.tremor, ["tremor", "trimmer", "tremour", "shaking", "shaky", "shake", "shakes", "shaken"]),
+            (.bradykinesia, ["bradykinesia", "bradikinesia", "slow movement", "slow movements", "slowdown", "slowness", "slow"]),
+            (.rigidity, ["rigidity", "rigid", "stiffness", "stiffnes", "stiff", "spasm", "spasms", "spastic"]),
             (.feelsGood, ["feels good", "feel good", "feeling good", "better now", "feeling ok"])
         ]
 

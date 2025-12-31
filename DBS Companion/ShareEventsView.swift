@@ -62,7 +62,7 @@ struct ShareEventsView: View {
             }
             .listStyle(.plain)
 
-            ShareLink(item: pdfURL(for: events), preview: SharePreview("DBS Companion")) {
+            ShareLink(item: pdfURL(for: events), preview: SharePreview("DBS Log")) {
                 Label("Share", systemImage: "square.and.arrow.up")
                     .frame(maxWidth: .infinity)
             }
@@ -92,7 +92,7 @@ struct ShareEventsView: View {
 
                 var y: CGFloat = 20
 
-                let title = "DBS Companion Export"
+                let title = "DBS Log Export"
                 let titleAttributes: [NSAttributedString.Key: Any] = [
                     .font: UIFont.boldSystemFont(ofSize: 20)
                 ]

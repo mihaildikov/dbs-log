@@ -14,12 +14,21 @@ struct DBS_CompanionApp: App {
         let schema = Schema([
             Event.self,
         ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+        let cloudConfiguration = ModelConfiguration(
+            schema: schema,
+            cloudKitDatabase: .private("iCloud.com.mixadu.DBS-Companion")
+        )
+        let localConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
         do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
+            return try ModelContainer(for: schema, configurations: [cloudConfiguration])
         } catch {
-            fatalError("Could not create ModelContainer: \(error)")
+            assertionFailure("CloudKit container failed, falling back to local storage: \(error)")
+            do {
+                return try ModelContainer(for: schema, configurations: [localConfiguration])
+            } catch {
+                fatalError("Could not create local ModelContainer: \(error)")
+            }
         }
     }()
 
