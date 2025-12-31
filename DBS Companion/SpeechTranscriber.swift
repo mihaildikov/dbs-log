@@ -190,7 +190,9 @@ final class SpeechTranscriber: NSObject, ObservableObject {
 private extension AVAudioEngine {
     var inputNodeOptional: AVAudioInputNode? {
         let node = inputNode
-        let format = node.inputFormat(forBus: 0)
-        return format.channelCount > 0 ? node : nil
+        guard node.engine != nil, node.numberOfInputs > 0 else { return nil }
+        let format = node.outputFormat(forBus: 0)
+        guard format.channelCount > 0, format.sampleRate > 0 else { return nil }
+        return node
     }
 }

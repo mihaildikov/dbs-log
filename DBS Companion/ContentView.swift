@@ -52,7 +52,6 @@ enum AddEventInputMethod: String, CaseIterable, Identifiable {
 enum AppRoute: Hashable {
     case newEvent(AddEventInputMethod)
     case newEventPrefilled(AddEventInputMethod, ParsedEventDraft, Bool)
-    case selectEvents
     case share([UUID])
     case photo
 }
@@ -68,6 +67,8 @@ struct ContentView: View {
     @State private var selectedStatus: EventStatus = .pending
     @State private var pendingCompleteID: UUID?
     @State private var showCompleteAlert = false
+    @State private var isSelecting = false
+    @State private var selectedIDs = Set<UUID>()
 
     private var timeFormatter: DateFormatter {
         let formatter = DateFormatter()
@@ -97,10 +98,15 @@ struct ContentView: View {
                     }
                 }
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Select") {
-                        path.append(AppRoute.selectEvents)
+                    Button(isSelecting ? "Done" : "Select") {
+                        if isSelecting {
+                            isSelecting = false
+                            selectedIDs.removeAll()
+                        } else {
+                            isSelecting = true
+                        }
                     }
-                    .disabled(events.isEmpty || selectedStatus != .pending)
+                    .disabled(events.isEmpty)
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
@@ -119,6 +125,11 @@ struct ContentView: View {
             }
             .navigationDestination(for: AppRoute.self) { route in
                 destination(for: route)
+            }
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                if isSelecting && !selectedIDs.isEmpty {
+                    selectionToolbar
+                }
             }
             .alert("Delete events?", isPresented: $showDeleteAlert, actions: {
                 Button("Delete", role: .destructive) {
@@ -158,6 +169,12 @@ struct ContentView: View {
                 }
             }
             .pickerStyle(.segmented)
+
+            if isSelecting {
+                Text("\(selectedIDs.count) selected")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -175,22 +192,7 @@ struct ContentView: View {
             ForEach(sectionedEvents, id: \.date) { section in
                 Section(header: Text(dayFormatter.string(from: section.date))) {
                     ForEach(section.events) { event in
-                        NavigationLink {
-                            EventDetailView(event: event)
-                        } label: {
-                            EventRow(event: event, timeFormatter: timeFormatter)
-                        }
-                        .swipeActions(edge: .leading, allowsFullSwipe: true) {
-                            if event.state == .pending {
-                                Button {
-                                    pendingCompleteID = event.id
-                                    showCompleteAlert = true
-                                } label: {
-                                    Label("Complete", systemImage: "checkmark.circle.fill")
-                                }
-                                .tint(.green)
-                            }
-                        }
+                        row(for: event)
                     }
                     .onDelete { offsets in
                         confirmDelete(offsets: offsets, in: section.events)
@@ -202,21 +204,49 @@ struct ContentView: View {
     }
 
     @ViewBuilder
+    private func row(for event: Event) -> some View {
+        if isSelecting {
+            HStack(spacing: 12) {
+                Image(systemName: selectedIDs.contains(event.id) ? "checkmark.circle.fill" : "circle")
+                    .foregroundStyle(selectedIDs.contains(event.id) ? .blue : .secondary)
+                EventRow(event: event, timeFormatter: timeFormatter)
+            }
+            .contentShape(Rectangle())
+            .onTapGesture { toggleSelection(event.id) }
+        } else {
+            NavigationLink {
+                EventDetailView(event: event)
+            } label: {
+                EventRow(event: event, timeFormatter: timeFormatter)
+            }
+            .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                if event.state == .pending {
+                    Button {
+                        pendingCompleteID = event.id
+                        showCompleteAlert = true
+                    } label: {
+                        Label("Complete", systemImage: "checkmark.circle.fill")
+                    }
+                    .tint(.green)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
     private func destination(for route: AppRoute) -> some View {
         switch route {
         case .newEvent(let method):
-            NewEventView(mode: method.mode, inputMethod: method, initialDraft: nil, autoStartVoice: false) { event in
+            NewEventView(mode: method.mode, initialDraft: nil, autoStartVoice: false) { event in
                 modelContext.insert(event)
+                resetSelection()
                 path.removeAll()
             }
         case .newEventPrefilled(let method, let draft, let autoStartVoice):
-            NewEventView(mode: method.mode, inputMethod: method, initialDraft: draft, autoStartVoice: autoStartVoice) { event in
+            NewEventView(mode: method.mode, initialDraft: draft, autoStartVoice: autoStartVoice) { event in
                 modelContext.insert(event)
+                resetSelection()
                 path.removeAll()
-            }
-        case .selectEvents:
-            SelectEventsView(events: shareableEvents) { selected in
-                path.append(AppRoute.share(Array(selected)))
             }
         case .share(let ids):
             let selectedEvents = events.filter { ids.contains($0.id) }
@@ -238,6 +268,14 @@ struct ContentView: View {
         showDeleteAlert = true
     }
 
+    private func toggleSelection(_ id: UUID) {
+        if selectedIDs.contains(id) {
+            selectedIDs.remove(id)
+        } else {
+            selectedIDs.insert(id)
+        }
+    }
+
     private func deleteEvents(with ids: [UUID]) {
         guard !ids.isEmpty else { return }
         withAnimation {
@@ -246,7 +284,37 @@ struct ContentView: View {
                     event.state = .archived
                 }
             }
+            resetSelection()
         }
+    }
+
+    private var selectionToolbar: some View {
+        HStack(spacing: 12) {
+            if selectedStatus == .pending {
+                Button {
+                    let selected = Array(selectedIDs)
+                    path.append(.share(selected))
+                    resetSelection()
+                } label: {
+                    Label("Share", systemImage: "square.and.arrow.up")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .disabled(selectedIDs.isEmpty)
+            }
+
+            Button(role: .destructive) {
+                pendingDeleteIDs = Array(selectedIDs)
+                showDeleteAlert = true
+            } label: {
+                Label("Delete", systemImage: "trash")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .disabled(selectedIDs.isEmpty)
+        }
+        .padding()
+        .background(.regularMaterial)
     }
 
     private var sectionedEvents: [(date: Date, events: [Event])] {
@@ -265,16 +333,15 @@ struct ContentView: View {
         events.filter { $0.state != .archived && $0.state == selectedStatus }
     }
 
-    private var shareableEvents: [Event] {
-        events
-            .filter { $0.state == .pending }
-            .sorted { $0.timestamp > $1.timestamp }
-    }
-
     private func markComplete(_ event: Event) {
         withAnimation {
             event.state = .completed
         }
+    }
+
+    private func resetSelection() {
+        isSelecting = false
+        selectedIDs.removeAll()
     }
 }
 

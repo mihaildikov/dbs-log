@@ -5,7 +5,6 @@ struct NewEventView: View {
     @Environment(\.dismiss) private var dismiss
 
     let mode: NewEventMode
-    let inputMethod: AddEventInputMethod
     var initialDraft: ParsedEventDraft? = nil
     var autoStartVoice: Bool = false
     var onSave: (Event) -> Void
@@ -61,10 +60,6 @@ struct NewEventView: View {
             Section(header: Text("Notes")) {
                 TextField("For example: \"Shoulder pulls forward\"", text: limitedNotesBinding, axis: .vertical)
                     .lineLimit(3...6)
-            }
-
-            Section(header: Text("Input method")) {
-                Label(inputMethod.label, systemImage: inputMethod.icon)
             }
 
             if !warnings.isEmpty {
@@ -307,6 +302,6 @@ struct NewEventView: View {
 
 #Preview {
     NavigationStack {
-        NewEventView(mode: .voice, inputMethod: .voice, initialDraft: nil, autoStartVoice: false) { _ in }
+        NewEventView(mode: .voice, initialDraft: nil, autoStartVoice: false) { _ in }
     }
 }
