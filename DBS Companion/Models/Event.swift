@@ -53,19 +53,11 @@ enum EventStatus: String, CaseIterable, Identifiable, Codable {
 
 @Model
 final class Event {
-    @Attribute(.unique) var id: UUID
-    var timestamp: Date
-    var typeRaw: String
+    var id: UUID = Foundation.UUID()
+    var timestamp: Date = Foundation.Date.now
+    var typeRaw: String = EventType.dyskinesia.rawValue
     var subtype: String?
-    var notes: String? {
-        didSet {
-            guard let notes, notes.count > 200 else { return }
-            let limited = String(notes.prefix(200))
-            if limited != notes {
-                self.notes = limited
-            }
-        }
-    }
+    var notes: String?
     var stateRaw: String = EventStatus.pending.rawValue
 
     init(id: UUID = UUID(), timestamp: Date, type: EventType, subtype: String? = nil, notes: String? = nil, state: EventStatus = .pending) {

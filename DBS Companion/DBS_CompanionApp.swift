@@ -18,19 +18,32 @@ struct DBS_CompanionApp: App {
             schema: schema,
             cloudKitDatabase: .private("iCloud.com.mixadu.DBS-Companion")
         )
-        let localConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+        let localConfiguration = ModelConfiguration("Local", schema: schema, isStoredInMemoryOnly: false)
 
         do {
             return try ModelContainer(for: schema, configurations: [cloudConfiguration])
         } catch {
-            assertionFailure("CloudKit container failed, falling back to local storage: \(error)")
+            logModelContainerError(error, label: "CloudKit container failed, falling back to local storage")
             do {
                 return try ModelContainer(for: schema, configurations: [localConfiguration])
             } catch {
+                logModelContainerError(error, label: "Local container failed")
                 fatalError("Could not create local ModelContainer: \(error)")
             }
         }
     }()
+
+    private static func logModelContainerError(_ error: Error, label: String) {
+        let nsError = error as NSError
+        print("[DBS Log] \(label)")
+        print("[DBS Log] error: \(error)")
+        print("[DBS Log] domain: \(nsError.domain) code: \(nsError.code)")
+        print("[DBS Log] userInfo: \(nsError.userInfo)")
+    }
+
+    private static func logModelContainerNote(_ message: String) {
+        print("[DBS Log] \(message)")
+    }
 
     var body: some Scene {
         WindowGroup {
