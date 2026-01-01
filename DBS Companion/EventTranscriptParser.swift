@@ -72,6 +72,10 @@ struct EventTranscriptParser {
                 ["rigidity", "rigid", "stiffness", "stiffnes", "stiff", "spasm", "spasms", "spastic"]
             ),
             (
+                .batteryCharge,
+                ["battery charge", "battery charged", "charge battery", "charging battery", "battery level", "battery percent", "battery percentage"]
+            ),
+            (
                 .feelsGood,
                 ["feels good", "feel good", "feeling good", "feeling ok", "better now"]
             )

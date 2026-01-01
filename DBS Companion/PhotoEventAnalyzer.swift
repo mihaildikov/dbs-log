@@ -52,6 +52,7 @@ struct PhotoEventAnalyzer {
             (.tremor, ["tremor", "trimmer", "tremour", "shaking", "shaky", "shake", "shakes", "shaken"]),
             (.bradykinesia, ["bradykinesia", "bradikinesia", "slow movement", "slow movements", "slowdown", "slowness", "slow"]),
             (.rigidity, ["rigidity", "rigid", "stiffness", "stiffnes", "stiff", "spasm", "spasms", "spastic"]),
+            (.batteryCharge, ["battery charge", "battery charged", "charge battery", "charging battery", "battery level", "battery percent", "battery percentage"]),
             (.feelsGood, ["feels good", "feel good", "feeling good", "better now", "feeling ok"])
         ]
 
