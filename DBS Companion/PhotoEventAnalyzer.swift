@@ -53,6 +53,8 @@ struct PhotoEventAnalyzer {
             (.bradykinesia, ["bradykinesia", "bradikinesia", "slow movement", "slow movements", "slowdown", "slowness", "slow"]),
             (.rigidity, ["rigidity", "rigid", "stiffness", "stiffnes", "stiff", "spasm", "spasms", "spastic"]),
             (.batteryCharge, ["battery charge", "battery charged", "charge battery", "charging battery", "battery level", "battery percent", "battery percentage"]),
+            (.stimulationChange, ["stimulation change", "stim change", "stimulation adjusted", "stim adjusted", "stimulation adjustment", "stim adjustment"]),
+            (.physicalActivity, ["physical activity", "activity", "exercise", "workout", "walking", "run", "running", "gym"]),
             (.feelsGood, ["feels good", "feel good", "feeling good", "better now", "feeling ok"])
         ]
 

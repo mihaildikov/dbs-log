@@ -9,6 +9,8 @@ enum EventType: String, CaseIterable, Identifiable, Codable {
     case bradykinesia
     case rigidity
     case batteryCharge
+    case stimulationChange
+    case physicalActivity
     case feelsGood
 
     var id: String { rawValue }
@@ -29,6 +31,10 @@ enum EventType: String, CaseIterable, Identifiable, Codable {
             "Rigidity"
         case .batteryCharge:
             "Battery Charge"
+        case .stimulationChange:
+            "Stimulation Change"
+        case .physicalActivity:
+            "Physical Activity"
         case .feelsGood:
             "Feels Good"
         }
