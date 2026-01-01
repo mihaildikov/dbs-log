@@ -19,8 +19,14 @@ struct DBS_CompanionApp: App {
             cloudKitDatabase: .private("iCloud.com.mixadu.DBS-Companion")
         )
         let localConfiguration = ModelConfiguration("Local", schema: schema, isStoredInMemoryOnly: false)
+        let isUITest = ProcessInfo.processInfo.arguments.contains("UITests")
+        let isTestEnvironment = isUITest || ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
 
         do {
+            if isTestEnvironment {
+                let testConfiguration = ModelConfiguration("Test", schema: schema, isStoredInMemoryOnly: true)
+                return try ModelContainer(for: schema, configurations: [testConfiguration])
+            }
             return try ModelContainer(for: schema, configurations: [cloudConfiguration])
         } catch {
             logModelContainerError(error, label: "CloudKit container failed, falling back to local storage")

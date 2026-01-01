@@ -98,6 +98,7 @@ struct ContentView: View {
                         Image(systemName: "plus.circle.fill")
                             .font(.title2)
                     }
+                    .accessibilityIdentifier("addEventButton")
                 }
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(isSelecting ? "Done" : "Select") {
@@ -109,6 +110,7 @@ struct ContentView: View {
                         }
                     }
                     .disabled(events.isEmpty)
+                    .accessibilityIdentifier("selectEventsButton")
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
@@ -123,6 +125,7 @@ struct ContentView: View {
                     } label: {
                         Label(method.label, systemImage: method.icon)
                     }
+                    .accessibilityIdentifier("addEventOption_\(method.rawValue)")
                 }
             }
             .navigationDestination(for: AppRoute.self) { route in
@@ -182,6 +185,7 @@ struct ContentView: View {
                 }
             }
             .pickerStyle(.segmented)
+            .accessibilityIdentifier("statusPicker")
 
             if isSelecting {
                 Text("\(selectedIDs.count) selected")
@@ -214,6 +218,7 @@ struct ContentView: View {
             }
         }
         .listStyle(.plain)
+        .accessibilityIdentifier("eventList")
     }
 
     @ViewBuilder
@@ -314,6 +319,7 @@ struct ContentView: View {
                 }
                 .buttonStyle(.bordered)
                 .disabled(selectedIDs.isEmpty)
+                .accessibilityIdentifier("shareSelectionButton")
 
                 Button {
                     pendingCompleteIDs = Array(selectedIDs)
@@ -325,6 +331,7 @@ struct ContentView: View {
                 .buttonStyle(.borderedProminent)
                 .tint(.green)
                 .disabled(selectedIDs.isEmpty)
+                .accessibilityIdentifier("completeSelectionButton")
             }
 
             Button(role: .destructive) {
@@ -336,6 +343,7 @@ struct ContentView: View {
             }
             .buttonStyle(.borderedProminent)
             .disabled(selectedIDs.isEmpty)
+            .accessibilityIdentifier("deleteSelectionButton")
         }
         .padding()
         .background(.regularMaterial)

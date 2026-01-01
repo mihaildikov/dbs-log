@@ -38,6 +38,7 @@ struct NewEventView: View {
                 DatePicker("", selection: $timestamp)
                     .labelsHidden()
                     .datePickerStyle(.compact)
+                    .accessibilityIdentifier("timestampPicker")
                 Text(dateFormatter.string(from: timestamp))
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -47,19 +48,24 @@ struct NewEventView: View {
                 Picker("Event type", selection: Binding<EventType?>(get: { eventType }, set: { eventType = $0 })) {
                     Text("Select type").tag(Optional<EventType>.none)
                     ForEach(EventType.allCases) { type in
-                        Text(type.displayName).tag(Optional(type))
+                        Text(type.displayName)
+                            .tag(Optional(type))
+                            .accessibilityIdentifier("eventTypeOption_\(type.rawValue)")
                     }
                 }
                 .pickerStyle(.navigationLink)
+                .accessibilityIdentifier("eventTypePicker")
             }
 
             Section(header: Text("Details (optional)")) {
                 TextField("For example: \"Shoulder pulls forward\"", text: $subtype)
+                    .accessibilityIdentifier("eventSubtypeField")
             }
 
             Section(header: Text("Notes")) {
                 TextField("For example: \"Shoulder pulls forward\"", text: limitedNotesBinding, axis: .vertical)
                     .lineLimit(3...6)
+                    .accessibilityIdentifier("eventNotesField")
             }
 
             if !warnings.isEmpty {
@@ -82,6 +88,7 @@ struct NewEventView: View {
                     dismiss()
                 }
                 .disabled(!isValid || transcriber.state == .processing)
+                .accessibilityIdentifier("saveEventButton")
             }
         }
         .onAppear {
