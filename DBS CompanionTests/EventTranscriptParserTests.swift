@@ -48,4 +48,12 @@ struct EventTranscriptParserTests {
 
         #expect(draft.type == .rigidity)
     }
+
+    @Test func parses_medication_keywords() async throws {
+        let parser = EventTranscriptParser()
+        let now = Date()
+        let draft = parser.parse("Took meds after breakfast", now: now)
+
+        #expect(draft.type == .medication)
+    }
 }

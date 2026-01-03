@@ -84,6 +84,10 @@ struct EventTranscriptParser {
                 ["physical activity", "activity", "exercise", "workout", "walking", "run", "running", "gym"]
             ),
             (
+                .medication,
+                ["medication", "meds", "med", "took meds", "took medication", "took dose", "dose", "pill", "pills"]
+            ),
+            (
                 .feelsGood,
                 ["feels good", "feel good", "feeling good", "feeling ok", "better now"]
             )
