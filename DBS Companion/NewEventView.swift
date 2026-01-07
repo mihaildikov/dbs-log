@@ -16,6 +16,34 @@ struct NewEventView: View {
     @State private var warnings: [String] = []
     @State private var didApplyDraft = false
     @State private var detectedDraft: ParsedEventDraft?
+    @State private var didApplyUITestOverrides = false
+
+    private static var uiTestTimeOverrides: [Date] = {
+        guard ProcessInfo.processInfo.arguments.contains("UITests"),
+              let raw = ProcessInfo.processInfo.environment["DBS_UI_TEST_TIMES"],
+              !raw.isEmpty
+        else { return [] }
+
+        let formatter = DateFormatter()
+        formatter.dateFormat = "h:mm a"
+        let calendar = Calendar.current
+        let baseDate = Date()
+        let dateParts = calendar.dateComponents([.year, .month, .day], from: baseDate)
+
+        return raw.split(separator: "|").compactMap { value in
+            let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard let timeDate = formatter.date(from: trimmed) else { return nil }
+            let timeParts = calendar.dateComponents([.hour, .minute], from: timeDate)
+            var combined = DateComponents()
+            combined.year = dateParts.year
+            combined.month = dateParts.month
+            combined.day = dateParts.day
+            combined.hour = timeParts.hour
+            combined.minute = timeParts.minute
+            return calendar.date(from: combined)
+        }
+    }()
+    private static var uiTestTimeIndex = 0
 
     @StateObject private var transcriber = SpeechTranscriber()
     private let parser = EventTranscriptParser()
@@ -94,6 +122,7 @@ struct NewEventView: View {
         .onAppear {
             transcriber.onFinalTranscription = applyTranscript
             applyInitialDraftIfNeeded()
+            applyUITestOverridesIfNeeded()
         }
         .onChange(of: transcriber.transcript) { _, latest in
             guard transcriber.state == .recording || transcriber.state == .processing else { return }
@@ -289,6 +318,24 @@ struct NewEventView: View {
         if mode == .voice && autoStartVoice {
             transcriber.startRecording()
         }
+    }
+
+    private func applyUITestOverridesIfNeeded() {
+        guard !didApplyUITestOverrides else { return }
+        guard mode == .manual else { return }
+        guard ProcessInfo.processInfo.arguments.contains("UITests") else { return }
+
+        if let override = Self.nextUITestTimeOverride() {
+            timestamp = override
+        }
+        didApplyUITestOverrides = true
+    }
+
+    private static func nextUITestTimeOverride() -> Date? {
+        guard uiTestTimeIndex < uiTestTimeOverrides.count else { return nil }
+        let override = uiTestTimeOverrides[uiTestTimeIndex]
+        uiTestTimeIndex += 1
+        return override
     }
 
     private func truncatedNotes(from text: String) -> String {

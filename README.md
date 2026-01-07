@@ -7,6 +7,9 @@ How to use
 - Use Select to share, complete, or delete multiple events.
 - Review and edit an event from the list as needed.
 
+Quick demo
+- See the screenshots: [Quick demo](docs/quick-demo.md)
+
 ## DBS Log — Purpose Statement
 DBS Log is designed to contextualize Medtronic Percept(TM) sensing data by pairing Percept scans with patient-reported symptoms, medication timing, and activity context, in order to facilitate more effective tuning of adaptive DBS (aDBS).
 
