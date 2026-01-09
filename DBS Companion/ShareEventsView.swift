@@ -1,4 +1,18 @@
 import SwiftUI
+import UniformTypeIdentifiers
+
+private struct ProgrammerSummaryExport: Transferable {
+    let data: Data
+    let suggestedFileName: String
+
+    static var transferRepresentation: some TransferRepresentation {
+        FileRepresentation(exportedContentType: .pdf) { export in
+            let url = FileManager.default.temporaryDirectory.appendingPathComponent(export.suggestedFileName)
+            try export.data.write(to: url, options: .atomic)
+            return SentTransferredFile(url, suggestedFileName: export.suggestedFileName)
+        }
+    }
+}
 
 struct ShareEventsView: View {
     let events: [Event]
@@ -67,7 +81,7 @@ struct ShareEventsView: View {
             }
             .listStyle(.plain)
 
-            ShareLink(item: pdfURL(for: events), preview: SharePreview("DBS Log")) {
+            ShareLink(item: exportItem(for: events), preview: SharePreview("DBS Log Export")) {
                 Label("Share", systemImage: "square.and.arrow.up")
                     .frame(maxWidth: .infinity)
             }
@@ -78,15 +92,22 @@ struct ShareEventsView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 
-    private func pdfURL(for events: [Event]) -> URL {
+    private func exportItem(for events: [Event]) -> ProgrammerSummaryExport {
+        let data = pdfData(for: events)
+        return ProgrammerSummaryExport(data: data, suggestedFileName: exportFilename())
+    }
+
+    private func exportFilename() -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyyMMdd_HHmm"
+        let timestamp = formatter.string(from: .now)
+        return "DBS_Log_Export_\(timestamp).pdf"
+    }
+
+    private func pdfData(for events: [Event]) -> Data {
         let sortedEvents = events.sorted { $0.timestamp < $1.timestamp }
         let recordedEvents = sortedEvents.filter { isRecorded($0) }
         let renderer = UIGraphicsPDFRenderer(bounds: CGRect(x: 0, y: 0, width: 612, height: 792))
-        let fileFormatter = ISO8601DateFormatter()
-        fileFormatter.formatOptions = [.withInternetDateTime]
-        let timestampString = fileFormatter.string(from: .now).replacingOccurrences(of: ":", with: "-")
-        let filename = "dbs_export_\(timestampString).pdf"
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
 
         let paragraph = NSMutableParagraphStyle()
         paragraph.lineBreakMode = .byWordWrapping
@@ -186,8 +207,7 @@ struct ShareEventsView: View {
             return sentences.joined(separator: " ")
         }
 
-        do {
-            try renderer.writePDF(to: url) { context in
+        return renderer.pdfData { context in
                 context.beginPage()
 
                 let pageWidth: CGFloat = 612
@@ -305,11 +325,6 @@ struct ShareEventsView: View {
                     y += drawWrappedText(line, x: leftMargin, y: y, width: contentWidth, attributes: bodyAttributes) + 6
                 }
             }
-        } catch {
-            return url
-        }
-
-        return url
     }
 }
 
