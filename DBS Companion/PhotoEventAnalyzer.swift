@@ -6,35 +6,39 @@ struct PhotoEventAnalyzer {
     enum AnalyzerError: Error {
         case noText
         case invalidImage
+        case templateMissing
+        case templateMismatch
     }
 
     func analyze(image: UIImage, now: Date = .now) async throws -> ParsedEventDraft {
-        guard let cgImage = image.cgImage else { throw AnalyzerError.invalidImage }
+        guard let template = DBSEventTemplateStore.shared else { throw AnalyzerError.templateMissing }
+        let normalized = normalizedImage(image)
+        guard let cgImage = normalized.cgImage else { throw AnalyzerError.invalidImage }
+        let orientation = cgOrientation(for: normalized.imageOrientation)
 
-        let request = VNRecognizeTextRequest()
-        request.recognitionLevel = .accurate
-        request.usesLanguageCorrection = true
+        guard (try? template.matches(cgImage: cgImage, orientation: orientation)) == true else {
+            throw AnalyzerError.templateMismatch
+        }
 
-        let handler = VNImageRequestHandler(cgImage: cgImage, orientation: cgOrientation(for: image.imageOrientation), options: [:])
-        try handler.perform([request])
-
-        let observations = request.results ?? []
-        let strings = observations.compactMap { $0.topCandidates(1).first?.string }
-        let combinedText = strings.joined(separator: " \n ")
+        let combinedText = try recognizeText(in: cgImage, orientation: orientation, region: nil)
+        let timeRegion = visionRegion(from: CGRect(x: 0.0, y: 0.0, width: 0.35, height: 0.15))
+        let timeText = try recognizeText(in: cgImage, orientation: orientation, region: timeRegion)
 
         guard !combinedText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             throw AnalyzerError.noText
         }
 
+        let meaningfulText = extractNotes(from: combinedText) ?? combinedText
+        let type = detectType(in: meaningfulText.lowercased()) ?? .dbsEvent
+        let timestamp = detectTime(in: timeText, now: now) ?? detectTime(in: combinedText, now: now) ?? now
         let lowered = combinedText.lowercased()
-        let type = detectType(in: lowered)
-        let timestamp = now
         let source = detectSource(in: lowered)
-        let notes = extractNotes(from: combinedText)
+        let notes = meaningfulText.trimmingCharacters(in: .whitespacesAndNewlines)
+        let subtype = type == .dbsEvent ? extractCatchAllSubtype(from: meaningfulText) : nil
 
         return ParsedEventDraft(
             type: type,
-            subtype: nil,
+            subtype: subtype,
             timestamp: timestamp,
             source: source,
             notes: notes,
@@ -46,6 +50,7 @@ struct PhotoEventAnalyzer {
 
     private func detectType(in text: String) -> EventType? {
         let keywords: [(EventType, [String])] = [
+            (.dbsEvent, ["dbs event"]),
             (.dystonia, ["dystonia", "dystonic", "distonia", "dastonia"]),
             (.dyskinesia, ["dyskinesia", "diskinesia", "dys kinesia"]),
             (.wearingOff, ["wearing off", "wearing-off", "off period", "event off", "wearing off recorded", "wearing-off recorded"]),
@@ -137,6 +142,14 @@ struct PhotoEventAnalyzer {
         return cleaned.isEmpty ? nil : cleaned
     }
 
+    private func extractCatchAllSubtype(from text: String) -> String? {
+        let lower = text.lowercased()
+        guard let recordedRange = lower.range(of: "recorded") else { return nil }
+        let prefix = text[..<recordedRange.lowerBound]
+        let cleaned = prefix.trimmingCharacters(in: .whitespacesAndNewlines)
+        return cleaned.isEmpty ? nil : cleaned
+    }
+
     private func makeDate(now: Date, hourString: String, minuteString: String) -> Date? {
         var components = Calendar.current.dateComponents([.year, .month, .day], from: now)
         components.hour = Int(hourString)
@@ -147,6 +160,41 @@ struct PhotoEventAnalyzer {
     private func substring(_ text: String, from range: NSRange) -> String {
         guard let swiftRange = Range(range, in: text) else { return "" }
         return String(text[swiftRange])
+    }
+
+    private func normalizedImage(_ image: UIImage) -> UIImage {
+        guard image.imageOrientation != .up else { return image }
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = image.scale
+        let renderer = UIGraphicsImageRenderer(size: image.size, format: format)
+        return renderer.image { _ in
+            image.draw(in: CGRect(origin: .zero, size: image.size))
+        }
+    }
+
+    private func recognizeText(in cgImage: CGImage, orientation: CGImagePropertyOrientation, region: CGRect?) throws -> String {
+        let request = VNRecognizeTextRequest()
+        request.recognitionLevel = .accurate
+        request.usesLanguageCorrection = true
+        if let region {
+            request.regionOfInterest = region
+        }
+
+        let handler = VNImageRequestHandler(cgImage: cgImage, orientation: orientation, options: [:])
+        try handler.perform([request])
+
+        let observations = request.results ?? []
+        let strings = observations.compactMap { $0.topCandidates(1).first?.string }
+        return strings.joined(separator: " \n ")
+    }
+
+    private func visionRegion(from normalizedRect: CGRect) -> CGRect {
+        CGRect(
+            x: normalizedRect.minX,
+            y: 1 - normalizedRect.maxY,
+            width: normalizedRect.width,
+            height: normalizedRect.height
+        )
     }
 
     private func cgOrientation(for orientation: UIImage.Orientation) -> CGImagePropertyOrientation {

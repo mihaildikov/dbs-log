@@ -22,7 +22,7 @@ enum AddEventInputMethod: String, CaseIterable, Identifiable {
         case .voice:
             "Voice input"
         case .camera:
-            "Camera / photo input"
+            "DBS Event"
         }
     }
 

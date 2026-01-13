@@ -4,6 +4,11 @@
 <dict>
 	<key>SchemeUserState</key>
 	<dict>
+		<key>DBS Companion (Debug).xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>1</integer>
+		</dict>
 		<key>DBS Companion.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>isShown</key>
@@ -15,6 +20,16 @@
 	<key>SuppressBuildableAutocreation</key>
 	<dict>
 		<key>64F964182F04678E0017BC42</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>64F964272F0467910017BC42</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>64F964312F0467910017BC42</key>
 		<dict>
 			<key>primary</key>
 			<true/>

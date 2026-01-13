@@ -9,7 +9,7 @@ private struct ProgrammerSummaryExport: Transferable {
         FileRepresentation(exportedContentType: .pdf) { export in
             let url = FileManager.default.temporaryDirectory.appendingPathComponent(export.suggestedFileName)
             try export.data.write(to: url, options: .atomic)
-            return SentTransferredFile(url, suggestedFileName: export.suggestedFileName)
+            return SentTransferredFile(url)
         }
     }
 }
@@ -142,6 +142,8 @@ struct ShareEventsView: View {
         func patientState(for event: Event) -> String {
             let base: String
             switch event.type {
+            case .dbsEvent:
+                base = "DBS Event"
             case .feelsGood:
                 base = "Feels good"
             case .wearingOff:

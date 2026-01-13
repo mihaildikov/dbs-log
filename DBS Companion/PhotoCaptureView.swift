@@ -66,7 +66,7 @@ struct PhotoCaptureView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             } else {
                 VStack(spacing: 12) {
-                    Text("Capture a screen or device showing event information")
+                    Text("Capture a Medtronic Percept event screen")
                         .font(.headline)
                         .multilineTextAlignment(.center)
                         .padding(.top)
@@ -90,7 +90,7 @@ struct PhotoCaptureView: View {
                     }
 
                     if case .analyzing = status {
-                        ProgressView("Analyzing photo…")
+                        ProgressView("Analyzing photo...")
                     }
 
                     if case .error(let message) = status {
@@ -109,12 +109,14 @@ struct PhotoCaptureView: View {
         }
         .padding()
         .sheet(isPresented: $showCamera, onDismiss: handleDismiss) {
-            CameraPicker(image: $capturedImage, source: .camera)
+            DBSEventCameraView { image in
+                capturedImage = image
+            }
         }
         .sheet(isPresented: $showLibrary, onDismiss: handleDismiss) {
             CameraPicker(image: $capturedImage, source: .photoLibrary)
         }
-        .navigationTitle("Photo entry")
+        .navigationTitle("DBS Event")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             if !didAutoPresent {
@@ -139,7 +141,7 @@ struct PhotoCaptureView: View {
                 }
             } catch {
                 await MainActor.run {
-                    self.status = .error("Couldn't detect event details from photo")
+                    self.status = .error(errorMessage(for: error))
                     self.draft = nil
                 }
             }
@@ -151,6 +153,23 @@ struct PhotoCaptureView: View {
         draft = nil
         status = .idle
         showCamera = true
+    }
+
+    private func errorMessage(for error: Error) -> String {
+        guard let analyzerError = error as? PhotoEventAnalyzer.AnalyzerError else {
+            return "Couldn't detect event details from photo"
+        }
+
+        switch analyzerError {
+        case .templateMissing:
+            return "Template image missing from the app bundle"
+        case .templateMismatch:
+            return "Photo doesn't match the DBS event template"
+        case .noText:
+            return "Couldn't read the DBS event details"
+        case .invalidImage:
+            return "Invalid photo captured"
+        }
     }
 }
 

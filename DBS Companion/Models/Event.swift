@@ -2,6 +2,7 @@ import Foundation
 import SwiftData
 
 enum EventType: String, CaseIterable, Identifiable, Codable {
+    case dbsEvent
     case dyskinesia
     case dystonia
     case wearingOff
@@ -18,6 +19,8 @@ enum EventType: String, CaseIterable, Identifiable, Codable {
 
     var displayName: String {
         switch self {
+        case .dbsEvent:
+            "DBS Event"
         case .dyskinesia:
             "Dyskinesia"
         case .dystonia:
@@ -86,7 +89,7 @@ final class Event {
     }
 
     var type: EventType {
-        get { EventType(rawValue: typeRaw) ?? .dyskinesia }
+        get { EventType(rawValue: typeRaw) ?? .dbsEvent }
         set { typeRaw = newValue.rawValue }
     }
 

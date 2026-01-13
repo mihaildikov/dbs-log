@@ -97,7 +97,16 @@ struct EventTranscriptParser {
             keywords.contains { text.contains($0) } ? eventType : nil
         }
 
-        return matches.first
+        if let match = matches.first {
+            return match
+        }
+
+        let dbsKeywords = ["dbs event"]
+        if dbsKeywords.contains(where: { text.contains($0) }) {
+            return .dbsEvent
+        }
+
+        return nil
     }
 
     private func detectSubtype(in text: String) -> String? {

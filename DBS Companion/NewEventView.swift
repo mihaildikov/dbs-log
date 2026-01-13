@@ -73,9 +73,10 @@ struct NewEventView: View {
             }
 
             Section(header: Text("Type")) {
+                let selectableTypes = EventType.allCases
                 Picker("Event type", selection: Binding<EventType?>(get: { eventType }, set: { eventType = $0 })) {
                     Text("Select type").tag(Optional<EventType>.none)
-                    ForEach(EventType.allCases) { type in
+                    ForEach(selectableTypes) { type in
                         Text(type.displayName)
                             .tag(Optional(type))
                             .accessibilityIdentifier("eventTypeOption_\(type.rawValue)")

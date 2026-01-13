@@ -5,6 +5,7 @@
 //  Created by Mikhail Dikov on 12/30/25.
 //
 
+import Combine
 import SwiftUI
 import SwiftData
 

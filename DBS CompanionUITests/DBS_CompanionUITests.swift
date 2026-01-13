@@ -162,7 +162,7 @@ final class EventCompletionUITests: BaseEventUITestCase {
         let app = launchApp()
         addManualEvent(app: app, optionIdentifier: "eventTypeOption_rigidity")
 
-        let row = app.staticTexts["Rigidity"]
+        let row = app.staticTexts["Rigidity"].firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 2))
         row.swipeRight()
         app.buttons["Complete"].tap()
@@ -170,7 +170,7 @@ final class EventCompletionUITests: BaseEventUITestCase {
 
         let statusControl = app.segmentedControls["statusPicker"]
         statusControl.buttons["Completed"].tap()
-        XCTAssertTrue(app.staticTexts["Rigidity"].waitForExistence(timeout: 2))
+        XCTAssertTrue(app.staticTexts["Rigidity"].firstMatch.waitForExistence(timeout: 2))
     }
 }
 
@@ -182,8 +182,8 @@ final class SelectionActionsUITests: BaseEventUITestCase {
         addManualEvent(app: app, optionIdentifier: "eventTypeOption_stimulationChange")
 
         app.buttons["selectEventsButton"].tap()
-        app.staticTexts["Battery Charge"].tap()
-        app.staticTexts["Stimulation Change"].tap()
+        app.staticTexts["Battery Charge"].firstMatch.tap()
+        app.staticTexts["Stimulation Change"].firstMatch.tap()
 
         XCTAssertTrue(app.buttons["shareSelectionButton"].isHittable)
         XCTAssertTrue(app.buttons["completeSelectionButton"].isHittable)
@@ -229,14 +229,14 @@ final class QuickDemoScreenshotUITests: BaseEventUITestCase {
         captureScreenshot(app, name: "02-new-event-form", outputDirectory: outputURL)
         app.buttons["saveEventButton"].tap()
 
-        XCTAssertTrue(app.staticTexts["Medication"].waitForExistence(timeout: 2))
-        XCTAssertTrue(app.staticTexts["Dyskinesia"].waitForExistence(timeout: 2))
+        XCTAssertTrue(app.staticTexts["Medication"].firstMatch.waitForExistence(timeout: 2))
+        XCTAssertTrue(app.staticTexts["Dyskinesia"].firstMatch.waitForExistence(timeout: 2))
 
         captureScreenshot(app, name: "01-event-list", outputDirectory: outputURL)
 
         app.buttons["selectEventsButton"].tap()
-        app.staticTexts["Medication"].tap()
-        app.staticTexts["Dyskinesia"].tap()
+        app.staticTexts["Medication"].firstMatch.tap()
+        app.staticTexts["Dyskinesia"].firstMatch.tap()
         app.buttons["shareSelectionButton"].tap()
 
         XCTAssertTrue(app.navigationBars["Share"].waitForExistence(timeout: 2))
